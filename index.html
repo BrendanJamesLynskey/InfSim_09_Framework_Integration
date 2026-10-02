@@ -782,6 +782,11 @@
             .ladder-row { grid-template-columns: 1fr; gap: 0.2rem; }
             .ladder-row .speed { text-align: left; }
         }
+        .concepts { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.75rem 1rem; margin-top: 1.25rem; font-size: 0.88rem; }
+        .concepts p { margin: 0 0 0.4rem; color: var(--text-secondary); }
+        .concepts .chips { display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem; }
+        .concepts .chips a { border: 1px solid var(--border); border-radius: 999px; padding: 0.1rem 0.6rem; text-decoration: none; font-size: 0.82rem; }
+        .concepts .chips a:hover { border-color: var(--accent); }
     </style>
 </head>
 <body>
@@ -831,6 +836,10 @@
         <li><a href="#slide-12">Putting the Toolchain Together</a></li>
         <li><a href="#slide-13">What to Take Away</a></li>
     </ul>
+    <div class="concepts">
+        <p><strong>Concepts used here, and where they are explained.</strong> Each links to its <a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#glossary">series glossary</a> entry: a short explanation, then links to the slides that explain it in depth, in this series, the Local LLM Hosting and Key Publications decks, or the FHE Accelerator Simulators series.</p>
+        <div class="chips"><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-export" title="Capturing a PyTorch model ahead of time as one graph of ATen operators with fake-tensor shapes on every node; run_decompositions() lowers it to the smaller Core ATen set a cost model can cover.">torch.export and FX graphs</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-compilebackend" title="TorchDynamo captures graphs as Python runs and hands each to a backend callable, a clean hook for a simulator that estimates cost and then runs the graph eagerly.">torch.compile backends</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-dispatch" title="A TorchDispatchMode sees every ATen call; on the meta device tensors have shapes but no storage, so a 70B model&#x27;s exact operator trace can be recorded on a laptop.">Dispatch interception and the meta device</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-privateuse1" title="PyTorch&#x27;s dispatch key for vendor accelerators: rename it, register kernels, and users write model.to(&quot;device&quot;). A functional simulator behind it shows accuracy as well as speed.">PrivateUse1 out-of-tree devices</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-onnxrt" title="ONNX is a framework-neutral graph format; ONNX Runtime partitions graphs between execution providers, each claiming the nodes it can run, with fallback to the CPU.">ONNX and ONNX Runtime execution providers</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-mlir" title="A compiler framework built from dialects (operation sets at one level of abstraction) and progressive lowering. A custom dialect for new hardware is the natural input to its simulator.">MLIR and dialects</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-fhe" title="Computing on encrypted data. Ciphertexts are large RNS polynomials; the work is NTTs, modular arithmetic and key switching, and the data movement of ciphertexts and keys dominates.">Fully homomorphic encryption (FHE)</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-bootstrapping" title="Refreshing a CKKS ciphertext that has run out of levels by evaluating decryption homomorphically. Dominated by rotations and their key switches, so evaluation-key traffic often makes it memory-bound.">CKKS bootstrapping</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-ntt" title="The FFT over a finite field, used for polynomial multiplication in FHE. The kernel optical transform engines target.">Number-theoretic transform (NTT)</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-heir" title="Google&#x27;s MLIR-based FHE compiler: secret-annotated programs are lowered through scheme dialects to polynomial arithmetic and then to libraries such as OpenFHE, or to hardware.">HEIR</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-perfetto" title="A JSON timeline format (complete slices, counters, metadata) that Perfetto and chrome://tracing display. The simulator, ONNX Runtime&#x27;s profiler and RTL testbenches can all emit it, so timelines can be compared side by side.">Chrome trace events and Perfetto</a><a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#g-roofline" title="Attainable performance is the lower of peak compute and bandwidth × arithmetic intensity (FLOPs per byte). The ridge point is the intensity at which both limits meet; below it a kernel is memory-bound.">Roofline, arithmetic intensity and ridge point</a></div>
+    </div>
 </section>
 
 <section class="slide" id="slide-01">
@@ -1074,6 +1083,7 @@ shapes.update({t.name: list(t.dims) <span class="kw">for</span> t <span class="k
         <li><strong><code>heir-opt</code></strong> runs pass pipelines (scheme selection, parameter choice, packing and layout, lowering) and <strong><code>heir-translate</code></strong> emits code for a backend library.</li>
         <li><strong>Hardware hook:</strong> HEIR was designed with accelerator backends in mind. A hardware team can lower from the scheme or polynomial dialects into its own dialect, which gives the simulator a stream of NTTs, modular arithmetic and key switches with exact shapes.</li>
         <li><strong>Test oracle for free:</strong> the same program compiled to a CPU library such as OpenFHE gives reference outputs, so the simulator's functional model can be checked ciphertext by ciphertext.</li>
+        <li><strong>Worked example:</strong> the sister series <a href="https://brendanjameslynskey.github.io/FHESim_03_Simulating_an_FHE_Accelerator/">FHE Accelerator Simulators, deck 03</a> builds such a front end: it reads HEIR's CKKS-dialect output and simulates HEIR-compiled programs on an accelerator model.</li>
         <li><strong>Read the docs and source</strong> at <a href="https://heir.dev">heir.dev</a> and on GitHub (google/heir); the dialect set evolves quickly, so check the current pipelines rather than relying on any summary.</li>
     </ul>
 </section>
@@ -1116,7 +1126,7 @@ shapes.update({t.name: list(t.dims) <span class="kw">for</span> t <span class="k
         ['fh-n','fh-l','fh-ntt','fh-bw'].forEach(id => $(id).addEventListener('input', rec)); rec();
     })();
     </script>
-    <p style="font-size:0.85rem;">The same lesson as the LLM roofline in deck 03: a faster compute primitive moves the bottleneck to memory and data movement unless the architecture keeps data close to the engine. Key-switching keys (often far larger than a ciphertext) make this worse.</p>
+    <p style="font-size:0.85rem;">For the full treatment (bootstrapping, key traffic, scratchpad sizing and optical NTT engines, simulated), see the sister series <a href="https://brendanjameslynskey.github.io/FHE_Hub_Accelerator_Simulators/">FHE Accelerator Simulators</a>. The same lesson as the LLM roofline in deck 03: a faster compute primitive moves the bottleneck to memory and data movement unless the architecture keeps data close to the engine. Key-switching keys (often far larger than a ciphertext) make this worse.</p>
 </section>
 
 <section class="slide" id="slide-12">
@@ -1158,7 +1168,7 @@ shapes.update({t.name: list(t.dims) <span class="kw">for</span> t <span class="k
 
 <!-- ════════════════════════════════════ Footer ════════════════════════════════════ -->
 <footer class="footer">
-    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Inference_Simulators">LLM Inference Simulators series</a> &middot; code: <a href="https://github.com/BrendanJamesLynskey/Disaggregated_Inference_Sim">Disaggregated_Inference_Sim</a></p>
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Inference_Simulators">LLM Inference Simulators series</a> &middot; <a href="https://brendanjameslynskey.github.io/LLM_Hub_Inference_Simulators/#glossary">glossary: every concept and where it is explained</a> &middot; code: <a href="https://github.com/BrendanJamesLynskey/Disaggregated_Inference_Sim">Disaggregated_Inference_Sim</a></p>
     <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://brendanjameslynskey.github.io/InfSim_08_Accelerating_Simulators/">&larr; 08 Accelerating Inference Simulators</a> &nbsp;&middot;&nbsp; <a href="https://brendanjameslynskey.github.io/InfSim_10_Further_Learning/">10 Further Learning: Books, Courses, Papers, Tools &rarr;</a></p>
     <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLMs#hardware--inference">Back to the LLMs hub</a></p>
 </footer>
